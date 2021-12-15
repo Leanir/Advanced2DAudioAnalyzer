@@ -1,6 +1,9 @@
 import processing.sound.*;
 AudioIn in;
 
+Onde daBOB;
+int velCerchio;
+
 
 PFont fontArial;          //servirà per impostare il font ad Arial 18
 Materiale selected;
@@ -18,7 +21,7 @@ Player BOB;                                  // oggetto controllato dall'utente
 
 void setup(){
   size(1400,1000);                      //dimensione della finestra fissata
-  frameRate(60);                        //frame rate della funzione draw
+  frameRate(15);                        //frame rate della funzione draw
   fontArial = createFont("Arial",18);   //impostazione font
   in = new AudioIn(this);               //prende il microfono in input
   //in.play();
@@ -52,6 +55,8 @@ void setup(){
   
   
   BOB = new Player(loadImage("BOB1.png"));    // ### ecco la nostra star ###
+  
+  daBOB=new Onde(34.3,255);
 }
 
 
@@ -68,6 +73,7 @@ void draw(){
   
   
   // ### Disegna le barre utilità ###
+  fill(235); noStroke();  rect(1000,0,400,1000);         //creiamo la base colore sopra la quale stanno le barre utilità
   fill(0);  textFont(fontArial);             //imposta il font
   
   text("Base", 1105, 75);                    //stampa "Base" sopra la lista interagibile
@@ -85,6 +91,8 @@ void draw(){
   text("Gomma Infame", 1260, 525);
   image(loadImage("gomma.png"), 1200, 500);  //icona della cancellazione parete
   // ### end ###
+  
+  daBOB.disegna(BOB.posX*50, BOB.posY*50, velCerchio+=daBOB.speed);
   
 }
 

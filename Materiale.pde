@@ -15,5 +15,11 @@ class Materiale{
     pass=flag;
   }
   
-  //spazio riservato ai metodi legati alle modifiche audio in base ai materiali
+  //metodi di trasmissione sonorada casella a casella
+  void passa(int posXprec, int posYprec, 
+             int posX,     int posY,
+             int posXsucc, int posYsucc ){
+    
+  }
+  
 };
