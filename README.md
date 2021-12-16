@@ -11,3 +11,8 @@ Cosa manca da fare:
 - Fare il diagramma UML degli oggetti implementati
 - Implementare le funzioni di modifica audio per il microfono virtuale
 - Implementare le funzioni grafiche delle onde sonore
+
+
+Meme da inserire nella presentazione finale:
+
+- ricoprire le città di poltrone
