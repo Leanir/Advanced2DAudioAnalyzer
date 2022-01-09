@@ -1,3 +1,10 @@
+/*
+  Il codice non è completo, necessita ancora di un approfondimento legato al calcolo audio
+  In seguito arriverà la parte grafica
+*/
+
+
+
 import processing.sound.*;
 AudioIn in;
 
@@ -5,12 +12,15 @@ Onde daBOB;
 int velCerchio;
 
 
+float SOGLIA = 20;
+
+
 PFont fontArial;          //servirà per impostare il font ad Arial 18
 Materiale selected;
 Materiale ambiente;
 
 // ### Dichiarazione degli spazi di memoria utili a setuppare il tutto ###
-Materiale[] base = new Materiale[3];        // array contenente i materiali attraversabili
+Materiale[] base = new Materiale[3];         // array contenente i materiali attraversabili
 Materiale[] wall = new Materiale[6];         // array contenente i materiali ostacolo
 Materiale[][] map = new Materiale[20][20];   // matrice contenente le tiles che frmano la mappa effettiva
 Player BOB;                                  // oggetto controllato dall'utente
@@ -159,4 +169,69 @@ void mousePressed(){
       map[mouseX/50][mouseY/50] = selected;
   }
   
+}
+
+
+
+
+
+//parte del sistema calcolo audio
+
+void controlloProgressivo(int x, int y, int succ){
+  int control = map[x][y].prog_iniziale;                                  //salvo il valore iniziale del progressivo
+  if(succ-control>33 && ambiente==base[1]) map[x][y].eco = true;         //verifico se si svolge l'eco ed eventualmente aggiorno materiale
+  if (control==0){                                                       //correggo i valori dei progressivi in base ai loro valori
+    map[x][y].prog_iniziale = succ;
+    map[x][y].progressivo = succ;
+  }
+  else if ( map[x][y].progressivo<succ) map[x][y].progressivo = succ;                  //aggiorno il progressivo solo se il nuovo è maggiore
+  if (map[x][y].prog_iniziale>succ)  map[x][y].prog_iniziale = succ;       //aggiorno il progressivo iniziale se ne trovo uno minore
+}
+
+boolean controlloRiflessione(int x, int y, int incO, int incV){          //controlla se il materiale cambia
+  if(map[x][y].nome!=map[x+incO][y+incV].nome) return true;
+  return false;
+}
+
+boolean Dispersione(int x, int y, int incO, int incV){                                //verifica se l'onda è udibile / rimane all'interno della mappa
+  if( map[x][y].intensity<SOGLIA || 
+      x+incO<0 || x+incO>19 || y+incV<0 || y+incV>19) return true;
+  return false;
+}
+
+void Diffusione(int x, int y, int incO, int incV, float intensity, int progressivo){   //funzione ricorsiva che si occupa della diffusione delle onde
+  if (Dispersione( x, y, incO, incV)) return;
+  
+  map[x][y].intensity= intensity*(1/(progressivo*progressivo));                                                 //modifico l'intensità con la legge dell'inverso del quadrato
+  controlloProgressivo(x, y, progressivo);                                  //controllo eco e aggiornamento progressivi di Materiale
+  
+  if(incO==0 || incV==0){                                                             //caso base
+    Diffusione(x+incO, y+incV, incO, incV, intensity-ASS, progressivo+1);              
+    if(controlloRiflessione(x, y, incO, incV))                                        //se include la riflessione
+      Diffusione(x-incO, y-incV, -incO, -incV, intensity*RIFL, progressivo+1);        
+      
+  }else{                                                                              //caso obliquo
+  
+    Diffusione(x, y+incV, 0, incV, intensity-ASS, progressivo+1);                     //diramazione verticale
+    Diffusione(x+incO, y, incO, 0, intensity-ASS, progressivo+1);                     //diramazione orizzontale
+    Diffusione(x+incO, y+incV, incO, incV, intensity-ASS, progressivo+1);             //diramazione obliqua
+    
+    if(controlloRiflessione(x, y, 0, incV))                                           //verifica riflessione nel ramo verticale
+      Diffusione(x, y-incV, 0, -incV, intensity*RIFL, progressivo+1); 
+    if(controlloRiflessione(x, y, incO, 0))                                           //verifica riflessione nel ramo orizzontale
+      Diffusione(x-incO, y, -incO, 0, intensity*RIFL, progressivo+1);
+    if(controlloRiflessione(x, y, incO, incV)){                                       //verifica riflessione nel ramo obliquo, split dell'onda in due
+      Diffusione(x-incO, y+incV, -incO, +incO, intensity*RIFL, progressivo+1);
+      Diffusione(x+incO, y-incV, +incO, -incO, intensity*RIFL, progressivo+1);
+    }
+  }
+}
+
+
+void getStarted(int posX, int posY){                                                  //viene richiamata quando l'utente clicca AVVIA
+  int x = posX;
+  int y = posY;
+  for(int i=-1; i<2; i++)
+    for(int j=-1; j<2; j++)
+      if( i!=0 && j!=0) Diffusione( x, y, i, j, 100.0, 1);                            //vengono avviate le otto diramazioni di diffusione 
 }
