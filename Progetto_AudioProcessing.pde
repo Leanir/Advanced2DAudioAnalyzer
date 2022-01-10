@@ -5,36 +5,34 @@
 
 
 
-import processing.sound.*;
-AudioIn in;
+import processing.sound.*;    // Libreria Sound di Processing
+AudioIn in;                   // Oggetto che andrà ad "immagazzinare" l'ingresso audio
 
 Onde daBOB;
 int velCerchio;
 
-
 float SOGLIA = 20;
 
+PFont fontArial;              // servirà per impostare il font del testo su schermo
+Materiale selected;           // Oggetto Materiale contenente l'ultimo materiale selezionato dall'utente
+Materiale ambiente;           // Oggetto Materiale contentenente il mezzo di trasmissione principale nel quale si trova BOB
 
-PFont fontArial;          //servirà per impostare il font ad Arial 18
-Materiale selected;
-Materiale ambiente;
 
 // ### Dichiarazione degli spazi di memoria utili a setuppare il tutto ###
 Materiale[] base = new Materiale[3];         // array contenente i materiali attraversabili
-Materiale[] wall = new Materiale[6];         // array contenente i materiali ostacolo
-Materiale[][] map = new Materiale[20][20];   // matrice contenente le tiles che frmano la mappa effettiva
-Player BOB;                                  // oggetto controllato dall'utente
+Materiale[] wall = new Materiale[6];         // array contenente i materiali che faranno da pareti
+Materiale[][] map = new Materiale[20][20];   // matrice contenente i materiali sulla mappa effettiva
+Player BOB;                                  // BOB sarà il nostro monopolo acustico
 // ### end ###
 
 
 
 
 void setup(){
-  size(1400,1000);                      //dimensione della finestra fissata
-  frameRate(15);                        //frame rate della funzione draw
+  size(1400,1000);                      //dimensione della finestra fissata a 1400x1000
+  frameRate(60);                        //frame rate della funzione draw
   fontArial = createFont("Arial",18);   //impostazione font
-  in = new AudioIn(this);               //prende il microfono in input
-  //in.play();
+  //in = new AudioIn(this);             // !!
   
   
   // ### riempimento array dei materiali attraversabili da BoB ###
@@ -58,21 +56,24 @@ void setup(){
   
   
   // ### inizializzazione mappa ###
-  ambiente = base[0];                                                //materalie iniziale = vuoto
+  ambiente = base[0];        //materalie iniziale = vuoto
   
-  for(int i=0;i<20;i++) for(int j=0;j<20;j++) map[i][j] = ambiente;  //la mappa comincia come vuota
+  for(int i=0;i<20;i++) 
+    for(int j=0;j<20;j++) 
+      map[i][j] = ambiente;  //la mappa comincia come vuota
   // ### end ###
   
+  // ecco la nostra star
+  BOB = new Player(loadImage("BOB1.png"));    
   
-  BOB = new Player(loadImage("BOB1.png"));    // ### ecco la nostra star ###
-  
-  daBOB=new Onde(34.3,255);
+  //daBOB=new Onde(34.3,255);
 }
 
 
 
 
 void draw(){
+  
   // ### Disegna la mappa ###
   for(int i=0; i<20; i++)
     for(int j=0; j<20; j++)
@@ -80,7 +81,6 @@ void draw(){
   // ### end ###
   
   image(BOB.skin,BOB.posX*50,BOB.posY*50);    //questo fa vedere BOB in mappa. Ciao BOB
-  
   
   // ### Disegna le barre utilità ###
   fill(235); noStroke();  rect(1000,0,400,1000);         //creiamo la base colore sopra la quale stanno le barre utilità
@@ -100,12 +100,15 @@ void draw(){
   
   text("Gomma Infame", 1260, 525);
   image(loadImage("gomma.png"), 1200, 500);  //icona della cancellazione parete
-  // ### end ###
+  // ### Fine della sezione barre utilità ###
   
-  daBOB.disegna(BOB.posX*50, BOB.posY*50, velCerchio+=daBOB.speed);
+  //daBOB.disegna(BOB.posX*50, BOB.posY*50, velCerchio+=daBOB.speed);
   
 }
 
+// ### Comandi movimento BOB ###
+// ### Usa le frecce direzionali per spostare BOB ###
+// ### N.B.: BOB non può uscire dalla mappa ###
 void keyPressed(){
   if(keyCode == UP){
     if(BOB.posY>0 && map[BOB.posX][BOB.posY-1].pass==true)
@@ -129,6 +132,8 @@ void keyPressed(){
   
 }
 
+
+// ### Definizione comandi Click ###
 void mousePressed(){
   //se fai click sulla zona mezzi di trasmissione principale, cambia tutte le caselle senza pareti in caselle di quel materiale
   if(mouseX>=1100 && mouseX<=1150){
@@ -164,7 +169,7 @@ void mousePressed(){
 
   
   //se fai click sulla mappa, cambia il materiale di quella casella col materiale selezionato
-  else if(mouseX>=0 && mouseX<=1000 && selected != null){
+  else if(mouseX >= 0 && mouseX <= 1000 && selected != null){
     if(!BOB.isHere(mouseX/50, mouseY/50))
       map[mouseX/50][mouseY/50] = selected;
   }
@@ -178,32 +183,45 @@ void mousePressed(){
 //parte del sistema calcolo audio
 
 void controlloProgressivo(int x, int y, int succ){
-  int control = map[x][y].prog_iniziale;                                  //salvo il valore iniziale del progressivo
-  if(succ-control>33 && ambiente==base[1]) map[x][y].eco = true;         //verifico se si svolge l'eco ed eventualmente aggiorno materiale
-  if (control==0){                                                       //correggo i valori dei progressivi in base ai loro valori
-    map[x][y].prog_iniziale = succ;
-    map[x][y].progressivo = succ;
-  }
-  else if ( map[x][y].progressivo<succ) map[x][y].progressivo = succ;                  //aggiorno il progressivo solo se il nuovo è maggiore
-  if (map[x][y].prog_iniziale>succ)  map[x][y].prog_iniziale = succ;       //aggiorno il progressivo iniziale se ne trovo uno minore
+  int control = map[x][y].prog_iniziale;                    //salvo il valore iniziale del progressivo                     
+  if(succ-control>33 && ambiente==base[1])                  //verifico se si svolge l'eco ed eventualmente aggiorno materiale
+    map[x][y].eco = true;         
+  
+  if (control==0)                                           //correggo i valori dei progressivi in base ai loro valori
+    map[x][y].prog_iniziale = map[x][y].progressivo = succ;
+  else if ( map[x][y].progressivo<succ) 
+    map[x][y].progressivo = succ;                           //aggiorno il progressivo solo se il nuovo è maggiore
+  
+  if (map[x][y].prog_iniziale>succ)  
+    map[x][y].prog_iniziale = succ;                         //aggiorno il progressivo iniziale se ne trovo uno minore
 }
 
-boolean controlloRiflessione(int x, int y, int incO, int incV){          //controlla se il materiale cambia
+
+// Funzione che controlla se il materiale cambia
+boolean controlloRiflessione(int x, int y, int incO, int incV){          
   if(map[x][y].nome!=map[x+incO][y+incV].nome) return true;
   return false;
 }
 
-boolean Dispersione(int x, int y, int incO, int incV){                                //verifica se l'onda è udibile / rimane all'interno della mappa
+
+// Funzione che verifica se l'onda è udibile o se rimane all'interno della mappa
+boolean Dispersione(int x, int y, int incO, int incV){                                
   if( map[x][y].intensity<SOGLIA || 
-      x+incO<0 || x+incO>19 || y+incV<0 || y+incV>19) return true;
+      x+incO<0 || 
+      x+incO>19 || 
+      y+incV<0 || 
+      y+incV>19 ) 
+    return true;
   return false;
 }
 
-void Diffusione(int x, int y, int incO, int incV, float intensity, int progressivo){   //funzione ricorsiva che si occupa della diffusione delle onde
-  if (Dispersione( x, y, incO, incV)) return;
+
+// Funzione ricorsiva che si occupa della diffusione delle onde
+void Diffusione(int x, int y, int incO, int incV, float intensity, int progressivo){   
+  if (Dispersione( x, y, incO, incV)) return;                     // Nel caso in cui la dispersione dà esito positivo, non richiama più nulla
   
-  map[x][y].intensity= intensity*(1/(progressivo*progressivo));                                                 //modifico l'intensità con la legge dell'inverso del quadrato
-  controlloProgressivo(x, y, progressivo);                                  //controllo eco e aggiornamento progressivi di Materiale
+  map[x][y].intensity = intensity*(1/(progressivo*progressivo));  // modifico l'intensità con la legge dell'inverso del quadrato
+  controlloProgressivo(x, y, progressivo);                        // controllo eco e aggiornamento progressivi di Materiale
   
   if(incO==0 || incV==0){                                                             //caso base
     Diffusione(x+incO, y+incV, incO, incV, intensity-ASS, progressivo+1);              
