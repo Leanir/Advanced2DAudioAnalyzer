@@ -10,6 +10,6 @@ V1 docuentazione progetto: https://fmilotta.github.io/teaching/audioprocessing21
 
 ## Cosa manca da fare, in ordine di priorità:
 
-- completare le funzioni di calcolo audio applicando le librerie
+- Riproduzione a comando del risultato del test
 - Implementare le funzioni grafiche delle onde sonore
 
