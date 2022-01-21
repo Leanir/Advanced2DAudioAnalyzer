@@ -1,86 +1,124 @@
 class Onde{
-  int posX, posY;    // Coordinate dell'onda
+   
+  int posX, posY; // Coordinate dell'onda
   float movX, movY; // Fattori di movimento
-  int intensity;     // Gestisce l'opacità dell'onda
-  float vel;
-  float percorsi;
-  color colore;      // Colore dell'onda
-  
-  Onde(int x, int y, float gradi, int _intensity, float velMateriale){
-    posX = x;  posY = y;                    // Posizione in pixel sulla mappa iniziali dell'onda
-    movX = cos(gradi);  movY = sin(gradi);  // Fattori di movimento dati dall'angolo di partenza dell'onda
+  int intensity; // Gestisce l'opacità dell'onda
+  float vel; // La velocità del materiale su cui si trova
+  float percorsi; // Indica quanti pixel sono stati percorsi dall'onda
+  color colore; // Colore dell'onda
+   
+   
+  // Mel main creo le prime onde con Onde(BOB.posX, BOB.posY, cos(radians(8*i)), sen(radians(8*i)), 255, map[BOB.posX][BOB.posY].vel)
+  Onde(int x, int y, float _movX, float _movY, int _intensity, float velMateriale){
+    posX = x*50+25; posY = y*50+25; // Posizione in pixel sulla mappa iniziali dell'onda
+    movX = _movX; movY = _movY; // Fattori di movimento dati dall'angolo di partenza dell'onda
     intensity = _intensity;
     vel = velMateriale;
-    percorsi=0;
-    
+    percorsi = 0.0;
+     
     colore = color(255,0,0,intensity);
   }
-
-  
-  //PVector intersezione(int ax, int ay, int bx, int by, int cx, int cy, int dx, int dy){
-  //  PVector inters;
-
-  //  float uA = ((dx-cx)*(ay-cy) - (dy-cy)*(ax-cx)) / ((dy-cy)*(bx-ax) - (dx-cx)*(by-ay));
-  //  float uB = ((bx-ax)*(ay-cy) - (by-ay)*(ax-cx)) / ((dy-cy)*(bx-ax) - (dx-cx)*(by-ay));
+ 
+   
+  void disegna(ArrayList<Onde> waves){
+    noStroke();
+    fill(this.colore);
+    ellipse(this.posX, this.posY, 9, 9);
+ 
     
-  //  //// if uA and uB are between 0-1, lines are colliding
-  //  //if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
-
-  //    float intersectionX = ax + (uA * (bx-ax));
-  //    float intersectionY = ay + (uA * (by-ay));
-
-  //    inters = new PVector(intersectionX,intersectionY);
-  //  //}
-
-  //  return inters;
-  //}
-
-
-  //void collisione(PVector inters, ){
-
-  //}
-
-  
-  //void disegna(){
+ 
+    int xSucc = (int)(posX + vel * movX);
+    int ySucc = (int)(posY + vel * movY);
     
-  //  noStroke();
-  //  fill(colore);
-  //  ellipse(this.posX, this.posY, 5, 5);
-
-  //  // Va avanti in base all'angolo e alla velocità del materiale su cui si trova (m/100s)
-  //  // Tutto ciò seguendo appunto l'angolo, quindi ha una velocità x e una vel y
-
-  //  int spostamentoX = (int)(vel * movX);
-  //  int spostamentoY = (int)(vel * movY);
-
-  //  //ora che sappiamo di quanto si sposta, andiamo a mettere sta cosa nel main e ad ogni draw, si sposta di conseguenza
-
-  //  // nel draw verifica che alla prossima iterazione si trovi sullo stesso materiale
-
-  //  int xSucc = posX + spostamentoX;  
-  //  int ySucc = posY + spostamentoY;
-  //  if(map[xSucc/50][ySucc/50] != map[posX/50][posY/50]){
-  //    //avvia la funzione di rimbalzo sul punto che adesso ti dico come trovare, brutto stronzo
-
-  //    if ( xSucc/50 - posX/50 == 1 )  // sappiamo che la casella successiva è a destra
-  //      collisione(
-  //        intersezione( posX, posY,   xSucc, ySucc,   (xSucc/50)*50, (ySucc/50)*50,   (xSucc/50)*50, (ySucc/50)*50+50 ) );
-
-  //    else if ( xSucc/50 - posX/50 == -1 ) // sappiamo che la casella successiva è a sinistra
-  //      collisione(
-  //        intersezione(posX, posY,   xSucc, ySucc,   (posX/50)*50, (posY/50)*50,   (posX/50)*50, (posY/50)*50+50)));
-
-  //    else if ( xSucc/50 - posX/50 == 1 ) // sappiamo che la casella successiva è su
-  //      collisione(
-  //        intersezione(posX, posY,   xSucc, ySucc,   (posX/50)*50, (posY/50)*50,   (posX/50)*50+50, (posY/50)*50)));
-
-  //    else if ( xSucc/50 - posX/50 == -1 ) // sappiamo che la casella successiva è giù
-  //      collisione(
-  //        intersezione(posX, posY,   xSucc, ySucc,   (xSucc/50)*50, (ySucc/50)*50,   (xSucc/50)*50+50, (ySucc/50)*50)));
-
-  //  }
-  //}
-
-
-
+    if(xSucc<0 || xSucc>1000 || ySucc<0 || ySucc>1000){
+      waves.remove(this);
+    }else if( map[this.posX/50][this.posY/50] != map[xSucc/50][ySucc/50] ){
+ 
+      if ( xSucc/50 - posX/50 == 1 ) // sappiamo che la casella successiva è a destra
+        impatto( intersezione( this.posX, this.posY, xSucc, ySucc, (xSucc/50)*50, (ySucc/50)*50, (xSucc/50)*50, (ySucc/50)*50+50 ),
+                 waves, 1, -1 );
+ 
+      else if ( xSucc/50 - posX/50 == -1 ) // sappiamo che la casella successiva è a sinistra
+        impatto( intersezione(posX, posY, xSucc, ySucc, (posX/50)*50, (posY/50)*50, (posX/50)*50, (posY/50)*50+50),
+                 waves, 1, -1 );
+ 
+      else if ( xSucc/50 - posX/50 == 1 ) // sappiamo che la casella successiva è su
+        impatto( intersezione(posX, posY, xSucc, ySucc, (posX/50)*50, (posY/50)*50, (posX/50)*50+50, (posY/50)*50),
+                 waves, -1, 1 );
+ 
+      else if ( xSucc/50 - posX/50 == -1 ) // sappiamo che la casella successiva è giù
+        impatto( intersezione(posX, posY, xSucc, ySucc, (xSucc/50)*50, (ySucc/50)*50, (xSucc/50)*50+50, (ySucc/50)*50),
+                 waves, -1, 1 );
+ 
+    }else{
+ 
+      this.posX = xSucc;
+      this.posY = ySucc;
+      this.percorsi += this.vel;
+ 
+      this.intensity = (int)(255 * (map[this.posX/50][this.posY/50].velSuono / (percorsi/50)));
+ 
+      if(this.intensity < 10.0)
+        waves.remove(this);
+      else
+        this.colore = color(255, 0, 0, this.intensity);
+ 
+    }
+  }
+ 
+ 
+ 
+  PVector intersezione(int ax, int ay, int bx, int by, int cx, int cy, int dx, int dy){
+    PVector inters;
+    int intersectionX;
+    int intersectionY;
+ 
+ 
+    if(ax == bx){
+      intersectionX = ax;
+      intersectionY = cy;
+    }else if(ay == by){
+      intersectionY = ay;
+      intersectionX = cx;
+    }else if(cx == dx){
+      intersectionX = cx;
+      intersectionY = ( ((intersectionX-ax) * (by-ay)) / (bx-ax) ) + ay;
+    }else if(cy == dy){
+      intersectionY = cy;
+      intersectionX = ( ((intersectionY-ay) * (bx-ax)) / (by-ay) ) + ax;
+    }else{
+      float mAB = (by-ay)/(bx-ax);
+      float mCD = (dy-cy)/(dx-cx);
+      float qAB = (bx*ay - ax*by)/bx-ax;
+      float qCD = (dx*cy - cx*dy)/dx-cx;
+ 
+      intersectionX = (int)((qCD-qAB)/(mAB-mCD));
+      intersectionY = ( ((intersectionX-ax) * (by-ay)) / (bx-ax) ) + ay;
+    }
+ 
+ 
+    inters = new PVector(intersectionX,intersectionY);
+    return inters;
+  }
+ 
+ 
+ 
+  void impatto(PVector puntoImpatto, ArrayList<Onde> waves, int updown, int leftright){
+    //waves.add(new Onde((int)puntoImpatto.x, (int)puntoImpatto.y,
+    //                   this.movX, this.movY,
+    //                   (int)(this.intensity*map[(int)puntoImpatto.x/50][(int)puntoImpatto.y/50].assorbenza[indiceAudio]),
+    //                   map[(int)puntoImpatto.x/50][(int)puntoImpatto.y/50].velSuono)); //onda che prosegue nel prossimo materiale
+    this.setIntensity();
+    waves.add(new Onde((int)puntoImpatto.x, (int)puntoImpatto.y,
+                       this.movX*updown, this.movY*leftright,
+                       (int)(this.intensity*(1.0-map[(int)puntoImpatto.x/50][(int)puntoImpatto.y/50].assorbenza[indiceAudio])),
+                       this.vel));
+    waves.remove(this);
+  }
+   
+   
+  void setIntensity(){
+    this.intensity *= map[this.posX/50][this.posX/50].assorbenza[indiceAudio];
+  }
+  
 }

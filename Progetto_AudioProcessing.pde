@@ -37,7 +37,7 @@ Microfono mic;                              // Come BOB, mic è un oggetto unico
 
 void setup(){
   size(1400,1000);                          // Dimensione della finestra fissata a 1400x1000
-  frameRate(60);                            // Frame rate della funzione draw
+  frameRate(15);                            // Frame rate della funzione draw
   fontArial = createFont("Arial",18);       // Impostazione font
   
   audio = new SoundFile(this,nomeFile);     // 
@@ -90,9 +90,7 @@ void setup(){
   mic = new Microfono();
 
   onde = new ArrayList<Onde>();
-  for(int i = 0; i<45; i++){
-    onde.add(new Onde(BOB.posX, BOB.posY, radians(8.0*i), 255, map[BOB.posX][BOB.posY].velSuono));
-  }
+  
 }
 
 
@@ -148,6 +146,17 @@ void draw(){
   text("Echo: "     , 1050, 840);  text(int(map[mic.posX][mic.posY].echo), 1200, 840);
   text("Intensità: ", 1050, 860);  text(map[mic.posX][mic.posY].intensity, 1200, 860);
   
+  if(onde.size() != 0){
+    
+    int i = 0;
+    
+    while(i < onde.size()){
+      onde.get(i).disegna(onde);
+      i++;
+    }
+    
+  }
+  
 }
 
 
@@ -194,6 +203,11 @@ void mousePressed(){
         provaPartita = !provaPartita;
         if(provaPartita){
           audio.play();
+          
+          for(int i = 0; i<45; i++){
+            onde.add(new Onde(BOB.posX, BOB.posY, cos(radians(8.0*i)), sin(radians(8.0*i)), 255, map[BOB.posX][BOB.posY].velSuono));
+          }
+          
           getStarted(BOB.posX, BOB.posY);
         } 
         else audio.stop();
@@ -313,7 +327,7 @@ void Diffusione(int x, int y, int incO, int incV, float intens, int progressivo)
     return;
   }else{
     map[x][y].intensity = (intens / pow(progressivo, 2));  // modifico l'intensità con la legge dell'inverso del quadrato
-    println( x, " ", y, " ", map[x][y].intensity );
+    //println( x, " ", y, " ", map[x][y].intensity );
   }
   
   if (Dispersione( x, y ))  return;               // Nel caso in cui la dispersione dà esito positivo, non richiama più nulla
